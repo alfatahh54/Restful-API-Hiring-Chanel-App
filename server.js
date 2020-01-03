@@ -7,12 +7,11 @@ const   express = require('express'),
         cors = require('cors')
 
 app.use(bodyParser.urlencoded({
-    extended: true
+    extended: false,
 }));
 app.use(bodyParser.json());
-
 app.use(cors()) 
-
+app.use(express.static('images'))
 app.use(logger('dev'));
 const routes = require('./src/routes/routes');
 app.use('/api/v1',routes)

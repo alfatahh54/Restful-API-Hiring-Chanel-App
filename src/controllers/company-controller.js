@@ -1,43 +1,53 @@
-const uuidv4 = require('uuid/v4');
-const multer = require("multer");
-const path = require('path');
-const companyModels = require('../models/company-model');
+const uuidv4 = require('uuid/v4')
+const multer = require("multer")
+const companyModels = require('../models/company-model')
+const miscHelper = require('./respons')
 const conn = require('../config/conn')
 
 // multer
 const storage = multer.diskStorage({
-    destination: 'images/company',
+    destination: (req, file, cb) => {
+        cb(null, './images/company');
+      },
     filename: (req, file, cb) => {
-        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
+      var filetype = '';
+      if(file.mimetype === 'image/gif') {
+        filetype = 'gif';
+      }
+      if(file.mimetype === 'image/png') {
+        filetype = 'png';
+      }
+      if(file.mimetype === 'image/jpeg') {
+        filetype = 'jpg';
+      }
+        cb(null, file.fieldname + '-' + Date.now() + '.' + filetype)
     }
 })
 
-//init upload
+//init upload multer
 const upload = multer({
     storage: storage,
     limits: {
         fileSize: 1 * 1024 * 1024
     },
-    // fileFilter: helpers.imageFilter
 }).single('logo')
 
 module.exports = {
 
     // view table company
-    company:(req, res)=>{
+    getCompany:(req, res)=>{
         const page = parseInt(req.query.page) || 1
         const search = req.query.search || ''
         const limit = req.query.limit || 10
         const sort = req.query.sort || 'DESC'
         const sortBy = req.query.sortBy || 'name'
-    
         const offset = (page - 1) * limit
     
         let totalDataCompany = 0,
              totalPage = 0,
              prevPage = 0,
              nextPage = 0
-        conn.query('SELECT COUNT(*) as data FROM company', (err, res) => {
+        conn.query(`SELECT COUNT(*) as data FROM company WHERE (name LIKE '%${search}%')`, (err, res) => {
           if (err) {
             return miscHelper.response(res, 400, true, 'Error', err)
           }
@@ -59,8 +69,8 @@ module.exports = {
               per_page: limit,
               current_page: page,
               total_page: totalPage,
-              nextLink: `http://localhost:3001${req.originalUrl.replace('page=' + page, 'page=' + nextPage)}`,
-              prevLink: `http://localhost:3001${req.originalUrl.replace('page=' + page, 'page=' + prevPage)}`,
+              nextLink: `${req.originalUrl.replace('page=' + page, 'page=' + nextPage)}`,
+              prevLink: `${req.originalUrl.replace('page=' + page, 'page=' + prevPage)}`,
               message: 'Success getting all data'
              })
           })
@@ -75,16 +85,17 @@ module.exports = {
 // create Company
 createCompany: (req, res) => {
 upload(req, res, (err) => {
-    const { name, location, description } = req.body;
+    const { name, location, description, email } = req.body;
     const id = uuidv4(); // generate new id
-    const logo = req.file.filename;
-    const data = {id, name, logo, location, description };
+    const logo = `http://localhost:3000/company/${req.file.filename}`||'';
+    const data = {id, name, logo, location, description, email };
     console.log(req.body);
     companyModels.createCompany(data)
         .then(result => {
                 res.status(201).json({
                 status: 201,
                 err: false,
+                data,
                 message: 'Success add new company'
                 })
             })
@@ -100,30 +111,31 @@ upload(req, res, (err) => {
 
 // update company
 updateCompany: (req, res) => {
-upload(req, res, (err) => {
-const { name, location, description } = req.body;
-const id = req.params.id;
-const logo = req.file.filename;
-const data = { id, name, logo, location, description };
-
-companyModels.updateCompany(id, data)
-        .then(result => {
-            res.status(201).json({
-            status: 201,
-            err: false,
-            data,
-            message: 'Success add new user'
-            })
-        })
-        .catch(err => {
-            res.status(400).json({
-            status: 400,
-            err: true,
-            message: err
-            })   
-        })
-    })
-},
+    upload(req, res, (err) => {
+      const { name, location, description, email } = req.body;
+      const id = req.params.id; // generate new id
+      const logo =  `http://localhost:3000/company/${req.file.filename}`;
+      const data = {id, name, logo, location, description, email };
+      console.log(req.body);
+      companyModels.updateCompany(id, data)
+          .then(result => {
+                  res.status(201).json({
+                  status: 201,
+                  err: false,
+                  data,
+                  message: 'Success edit company'
+                  })
+              })
+          .catch(err => {
+              res.status(400).json({
+                  status: 400,
+                  err: true,
+                  message: err
+                  })   
+              })
+          })
+      },
+    
 
 // delete company
 deleteCompany: (req, res) => {

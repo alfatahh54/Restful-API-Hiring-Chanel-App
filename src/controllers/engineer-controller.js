@@ -1,15 +1,26 @@
-const uuidv4 = require('uuid/v4');
-const multer = require("multer"),
-        path = require("path");
+const uuidv4 = require('uuid/v4')
+const multer = require("multer")
 const engineerModels = require('../models/engineer-model')
 const miscHelper = require('./respons')
-
 const conn = require('../config/conn')
+
 // multer
 const storage = multer.diskStorage({
-    destination: './images/engineer',
+    destination: (req, file, cb) => {
+        cb(null, './images/engineer');
+      },
     filename: (req, file, cb) => {
-        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
+      var filetype = '';
+      if(file.mimetype === 'image/gif') {
+        filetype = 'gif';
+      }
+      if(file.mimetype === 'image/png') {
+        filetype = 'png';
+      }
+      if(file.mimetype === 'image/jpeg') {
+        filetype = 'jpg';
+      }
+        cb(null, file.fieldname + '-' + Date.now() + '.' + filetype)
     }
 })
 
@@ -19,7 +30,6 @@ const upload = multer({
     limits: {
         fileSize: 1 * 1024 * 1024
     },
-    // fileFilter: helpers.imageFilter
 }).single('showcase')
 
 module.exports = {
@@ -30,14 +40,13 @@ module.exports = {
         const limit = req.query.limit || 10
         const sort = req.query.sort || 'DESC'
         const sortBy = req.query.sortBy || 'date_updated'
-    
         const offset = (page - 1) * limit
     
         let totalDataEngineer = 0,
              totalPage = 0,
              prevPage = 0,
              nextPage = 0
-        conn.query('SELECT COUNT(*) as data FROM engineer', (err, res) => {
+        conn.query(`SELECT COUNT(*) as data FROM engineer WHERE (name LIKE '%${search}%' or skill LIKE '%${search}%')`, (err, res) => {
           if (err) {
             return miscHelper.response(res, 400, true, 'Error', err)
           }
@@ -59,8 +68,8 @@ module.exports = {
               per_page: limit,
               current_page: page,
               total_page: totalPage,
-              nextLink: `http://localhost:3001${req.originalUrl.replace('page=' + page, 'page=' + nextPage)}`,
-              prevLink: `http://localhost:3001${req.originalUrl.replace('page=' + page, 'page=' + prevPage)}`,
+              nextLink: `${req.originalUrl.replace('page=' + page, 'page=' + nextPage)}`,
+              prevLink: `${req.originalUrl.replace('page=' + page, 'page=' + prevPage)}`,
               message: 'Success getting all data'
              })
           })
@@ -75,31 +84,32 @@ module.exports = {
 
 // create Engineer
 createEngineer: (req, res) => {
-    upload(req, res, (err) => {
-        const { name, location, description, skill, date_of_birth, salary, email } = req.body;
-        const id = uuidv4(); // generate new id
-        const showcase = req.file.filename;
-        const date_created = new Date();
-        const date_updated = new Date(); 
-        const data = {id, name, description, skill, location,  date_of_birth, showcase, salary, email, date_created, date_updated };
-        console.log(data);
-        engineerModels.createEngineer(data)
-            .then(result => {
-                    res.status(201).json({
-                    status: 201,
-                    err: false,
-                    message: 'Success add new Engineer'
-                    })
-                })
-            .catch(err => {
-                res.status(400).json({
-                    status: 400,
-                    err: true,
-                    message: err
-                    })   
+  upload(req, res, (err) => {
+    const { name, skill, location, description, date_of_birth, salary, email } = req.body;
+    const id = uuidv4(); // generate new id
+    const date_updated= new Date();
+    const date_created= new Date(); 
+    console.log(req.file)
+    const showcase = `http://localhost:3000/engineer/${req.file.filename}`||'';
+    const data = {id, name, skill, showcase, location, salary, description, date_of_birth, date_created, date_updated, email };
+    engineerModels.createEngineer(data)
+        .then(result => {
+                res.status(201).json({
+                status: 201,
+                err: false,
+                data,
+                message: 'Success add new engineer'
                 })
             })
-        },
+        .catch(err => {
+            res.status(400).json({
+                status: 400,
+                err: true,
+                message: err
+                })   
+            })
+        })
+    },
 
 // update engineer
 updateEngineer: (req, res) => {
@@ -107,7 +117,7 @@ updateEngineer: (req, res) => {
         const { name, description, skill, location, date_of_birth, salary, email} = req.body;
         const date_updated = new Date();
         const id = req.params.id;
-        const showcase = req.file.filename;
+        const showcase = `http://localhost:3000/engineer/${req.file.filename}`;
         const data = {id, name, description, skill, location, date_of_birth, salary, showcase, email, date_updated };
 
         engineerModels.updateEngineer(id, data)

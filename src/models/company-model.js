@@ -3,7 +3,7 @@ const con = require('../config/conn')
 module.exports = {
 
     // view company table
-    company: (offset, limit, sort, sortBy, search) => {
+    company : (offset, limit, sort, sortBy, search) => {
         return new Promise((resolve, reject) => {
           const query = `SELECT * FROM company WHERE (name LIKE '%${search}%' or description LIKE '%${search}%' or id LIKE '%${search}%') 
           ORDER BY ${sortBy} ${sort} LIMIT ${offset}, ${limit}`
@@ -15,7 +15,7 @@ module.exports = {
                 resolve(result)
                 }
             })
-        }) 
+        })
     },
 
     // insert company
@@ -55,5 +55,5 @@ module.exports = {
                 }
             })
         })
-    },
+    }
 }

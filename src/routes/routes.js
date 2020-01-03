@@ -15,7 +15,7 @@ Route
 
 // routes company
 Route
-    .get("/companies",todoListCompany.company)
+    .get("/companies",todoListCompany.getCompany)
     .post("/company",todoListCompany.createCompany)
     .patch("/company/:id",todoListCompany.updateCompany)
     .delete("/company/:id",todoListCompany.deleteCompany);
