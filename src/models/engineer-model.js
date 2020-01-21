@@ -29,17 +29,17 @@ module.exports = {
             })
         },
         // update engineer
-    updateEngineer: (data, id) => {
-        return new Promise((resolve, reject) => {
-            con.query("UPDATE engineer SET ? where id = ?", [id, data], (err, result) => {
-                if (!err) {
-                    resolve(result)
-                }else {
-                    reject(new Error(err))
-                }
+        updateEngineer: (data, id) => {
+            return new Promise((resolve, reject) => {
+                con.query("UPDATE engineer SET ? where id = ?", [id, data], (err, result) => {
+                    if (!err) {
+                        resolve(result)
+                    }else {
+                        reject(new Error(err))
+                    }
+                })
             })
-        })
-    },
+        },
         // delete engineer
         deleteEngineer: (id) => {
         return new Promise((resolve, reject) => {

@@ -90,7 +90,7 @@ createEngineer: (req, res) => {
     const date_updated= new Date();
     const date_created= new Date(); 
     console.log(req.file)
-    const showcase = `http://localhost:3000/engineer/${req.file.filename}`||'';
+    const showcase = req.file.filename ? `http://localhost:3000/engineer/${req.file.filename}`: null;
     const data = {id, name, skill, showcase, location, salary, description, date_of_birth, date_created, date_updated, email };
     engineerModels.createEngineer(data)
         .then(result => {
@@ -117,9 +117,9 @@ updateEngineer: (req, res) => {
         const { name, description, skill, location, date_of_birth, salary, email} = req.body;
         const date_updated = new Date();
         const id = req.params.id;
-        const showcase = `http://localhost:3000/engineer/${req.file.filename}`;
+        const showcase = req.file ? `http://localhost:3000/engineer/${req.file.filename}`: null;
         const data = {id, name, description, skill, location, date_of_birth, salary, showcase, email, date_updated };
-
+        if (showcase === null) { delete data.showcase }
         engineerModels.updateEngineer(id, data)
         .then(result => {
             res.status(201).json({

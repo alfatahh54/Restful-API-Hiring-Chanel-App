@@ -116,7 +116,7 @@ updateCompany: (req, res) => {
       const id = req.params.id; // generate new id
       const logo =  `http://localhost:3000/company/${req.file.filename}`;
       const data = {id, name, logo, location, description, email };
-      console.log(req.body);
+      if (logo === null) { delete data.logo }
       companyModels.updateCompany(id, data)
           .then(result => {
                   res.status(201).json({

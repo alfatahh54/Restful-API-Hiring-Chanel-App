@@ -3,8 +3,8 @@ const   express = require('express'),
         app = express(),
         port = process.env.PORT,
         bodyParser = require('body-parser'),
-        logger = require('morgan');
-        cors = require('cors')
+        logger = require('morgan'),
+        cors = require('cors');
 
 app.use(bodyParser.urlencoded({
     extended: false,
